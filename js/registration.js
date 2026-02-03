@@ -24,41 +24,35 @@ registrationForm.addEventListener('submit', async (e) => {
         topic: document.getElementById('reg_topic').value
     }
 
-       try {
-        const { data, error } = await supabase
-            .from('workshop_registrations')
-            .insert([formData])
-            .select()
-    
-        if (error) {
-            if (error.code === '23505') {
-                throw new Error('This email is already registered!')
+           try {
+            const { data, error } = await supabase
+                .from('workshop_registrations')
+                .insert([formData])
+                .select()
+        
+            if (error) {
+                if (error.code === '23505') {
+                    throw new Error('This email is already registered!')
+                }
+                throw error
             }
-            throw error
+        
+            // Registration successful! Try to send email but don't fail if it doesn't work
+    try {
+        const emailResponse = await supabase.functions.invoke('send-confirmation-email', {
+            body: formData
+        })
+    
+        if (emailResponse.error) {
+            console.error('Email error:', emailResponse.error)
         }
-    
-        // Registration successful! Try to send email but don't fail if it doesn't work
-        try {
-            const emailResponse = await supabase.functions.invoke('send-confirmation-email', {
-                body: formData
-            })
-    
-            if (emailResponse.error) {
-                console.error('Email error:', emailResponse.error)
-            }
-        } catch (emailError) {
-            console.error('Email sending failed, but registration was successful:', emailError)
-        }
-    
-        // Show success message regardless of email status
-        registrationForm.style.display = 'none'
-        successMessage.style.display = 'flex'
-    
-    } catch (error) {
-        console.error('Error:', error)
-        alert(error.message || 'Registration failed. Please try again.')
-        submitButton.disabled = false
-        submitButton.textContent = 'Register Now'
+    } catch (emailError) {
+        console.error('Email sending failed, but registration was successful:', emailError)
     }
+    
+    // Show success message regardless of email status
+    registrationForm.style.display = 'none'
+    successMessage.style.display = 'flex'
+
 
 })
