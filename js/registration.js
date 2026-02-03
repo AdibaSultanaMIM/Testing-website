@@ -9,6 +9,9 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 const registrationForm = document.getElementById('registrationForm')
 const successMessage = document.getElementById('regSuccessMsg')
 const submitButton = registrationForm.querySelector('button[type="submit"]')
+const formContainer = document.querySelector('.registration-glass-container')
+const successContainer = document.getElementById('successContainer')
+const sectionHeader = document.querySelector('#registration .section-header')
 
 registrationForm.addEventListener('submit', async (e) => {
     e.preventDefault()
@@ -51,9 +54,23 @@ registrationForm.addEventListener('submit', async (e) => {
             console.error('Email sending failed, but registration was successful:', emailError)
         }
 
-        // Show success message regardless of email status
-        registrationForm.style.display = 'none'
-        successMessage.style.display = 'flex'
+        // Hide form container and section header
+        if (formContainer) {
+            formContainer.style.display = 'none'
+        }
+        
+        if (sectionHeader) {
+            sectionHeader.style.display = 'none'
+        }
+
+        // Show success container with animation
+        if (successContainer) {
+            successContainer.style.display = 'block'
+            // Smooth scroll to success message
+            setTimeout(() => {
+                successContainer.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }, 100)
+        }
 
     } catch (error) {
         console.error('Error:', error)
