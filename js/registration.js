@@ -7,7 +7,7 @@ const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
 const registrationForm = document.getElementById('registrationForm')
-const successMessage = document.getElementById('successMessage')
+const successMessage = document.getElementById('regSuccessMsg')
 const submitButton = registrationForm.querySelector('button[type="submit"]')
 
 registrationForm.addEventListener('submit', async (e) => {
@@ -17,11 +17,11 @@ registrationForm.addEventListener('submit', async (e) => {
     submitButton.textContent = 'Submitting...'
 
     const formData = {
-        full_name: document.getElementById('fullName').value,
-        email: document.getElementById('email').value,
-        phone: document.getElementById('phone').value,
-        institution: document.getElementById('institution').value,
-        topic: document.getElementById('topic').value
+        full_name: document.getElementById('reg_full_name').value,
+        email: document.getElementById('reg_email').value,
+        phone: document.getElementById('reg_phone').value,
+        institution: document.getElementById('reg_institution').value,
+        topic: document.getElementById('reg_topic').value
     }
 
     try {
@@ -49,7 +49,7 @@ registrationForm.addEventListener('submit', async (e) => {
 
         // Show success message
         registrationForm.style.display = 'none'
-        successMessage.style.display = 'block'
+        successMessage.style.display = 'flex'
 
     } catch (error) {
         console.error('Error:', error)
@@ -58,4 +58,3 @@ registrationForm.addEventListener('submit', async (e) => {
         submitButton.textContent = 'Register Now'
     }
 })
-
