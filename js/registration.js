@@ -195,13 +195,13 @@ registrationForm.addEventListener('submit', async (e) => {
             const firstError = Object.values(validation.errors)[0];
             showMainError(firstError);
             
-            throw new Error('Please fix the validation errors');
+            throw new Error('VALIDATION_ERROR');
         }
         
         console.log('Client-side validation passed ✓');
         
         // ============================================
-        // STEP 2: Call Edge Function (server-side validation + insert + email)
+        // STEP 2: Call Edge Function
         // ============================================
         console.log('Calling Edge Function...');
         
@@ -211,32 +211,59 @@ registrationForm.addEventListener('submit', async (e) => {
         
         console.log('Edge Function response:', response);
         
+        // ============================================
+        // STEP 3: Handle Edge Function Response (IMPROVED)
+        // ============================================
+        
+        // Handle Edge Function errors (network, timeout, etc.)
         if (response.error) {
             console.error('Edge Function error:', response.error);
-            throw response.error;
+            
+            // Try to extract meaningful error message
+            let errorMsg = 'Registration failed. Please try again.';
+            
+            if (response.error.message) {
+                errorMsg = response.error.message;
+            }
+            
+            showMainError(errorMsg);
+            throw new Error(errorMsg);
         }
         
+        // Handle server response
         const result = response.data;
         
-        // ============================================
-        // STEP 3: Handle response with specific error messages
-        // ============================================
+        // Check if result exists
+        if (!result) {
+            showMainError('No response from server. Please try again.');
+            throw new Error('Empty response from server');
+        }
+        
+        // Handle unsuccessful registration
         if (!result.success) {
             console.log('Server validation failed:', result);
             
-            // Build specific error message
-            let errorMessage = 'Registration failed. Please try again.';
+            // Extract user-friendly error message
+            let userErrorMessage = 'Registration failed. Please check your information and try again.';
             
+            // Priority 1: Check for errors array (multiple errors)
             if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
-                // Multiple errors - join them with bullet points
-                errorMessage = result.errors.join(' • ');
-            } else if (result.error && typeof result.error === 'string') {
-                // Single error message from server
-                errorMessage = result.error;
+                userErrorMessage = result.errors.join('\n• ');
+                if (result.errors.length > 1) {
+                    userErrorMessage = '• ' + userErrorMessage;
+                }
+            }
+            // Priority 2: Check for single error message
+            else if (result.error && typeof result.error === 'string' && result.error.length > 0) {
+                userErrorMessage = result.error;
+            }
+            // Priority 3: Check for message field
+            else if (result.message && typeof result.message === 'string' && result.message.length > 0) {
+                userErrorMessage = result.message;
             }
             
-            showMainError(errorMessage);
-            throw new Error(errorMessage);
+            showMainError(userErrorMessage);
+            throw new Error(userErrorMessage);
         }
         
         console.log('Registration successful! ✓');
@@ -265,20 +292,12 @@ registrationForm.addEventListener('submit', async (e) => {
     } catch (error) {
         console.error('Registration error:', error);
         
-        // Show error if not already shown
-        if (errorMessage.style.display === 'none') {
-            // Extract meaningful error message
-            let displayError = 'Registration failed. Please try again.';
+        // Only show error if not already shown and not validation error
+        if (errorMessage.style.display === 'none' && error.message !== 'VALIDATION_ERROR') {
+            let displayError = 'Something went wrong. Please try again.';
             
-            // Check if error has a meaningful message
-            if (error.message) {
-                // Don't show generic "Please fix" message again
-                if (!error.message.includes('Please fix the validation errors')) {
-                    displayError = error.message;
-                } else {
-                    // Validation errors already shown inline, use generic message
-                    displayError = 'Please correct the errors above';
-                }
+            if (error.message && error.message !== 'VALIDATION_ERROR') {
+                displayError = error.message;
             }
             
             showMainError(displayError);
