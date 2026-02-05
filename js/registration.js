@@ -124,10 +124,10 @@ function showMainError(message) {
     // Scroll to error
     errorMessage.scrollIntoView({ behavior: 'smooth', block: 'center' });
     
-    // Auto-hide after 5 seconds
+    // Auto-hide after 8 seconds
     setTimeout(() => {
         errorMessage.style.display = 'none';
-    }, 5000);
+    }, 8000);
 }
 
 /**
@@ -219,23 +219,24 @@ registrationForm.addEventListener('submit', async (e) => {
         const result = response.data;
         
         // ============================================
-        // STEP 3: Handle response
+        // STEP 3: Handle response with specific error messages
         // ============================================
         if (!result.success) {
             console.log('Server validation failed:', result);
             
-            // Server-side validation failed or duplicate found
-            if (result.errors && Array.isArray(result.errors)) {
-                // Multiple errors
-                showMainError(result.errors.join(', '));
-            } else if (result.error) {
-                // Single error
-                showMainError(result.error);
-            } else {
-                showMainError('Registration failed. Please try again.');
+            // Build specific error message
+            let errorMessage = 'Registration failed. Please try again.';
+            
+            if (result.errors && Array.isArray(result.errors) && result.errors.length > 0) {
+                // Multiple errors - join them with bullet points
+                errorMessage = result.errors.join(' • ');
+            } else if (result.error && typeof result.error === 'string') {
+                // Single error message from server
+                errorMessage = result.error;
             }
             
-            throw new Error(result.error || 'Registration failed');
+            showMainError(errorMessage);
+            throw new Error(errorMessage);
         }
         
         console.log('Registration successful! ✓');
@@ -253,7 +254,7 @@ registrationForm.addEventListener('submit', async (e) => {
             sectionHeader.style.display = 'none';
         }
         
-        // Show success container
+        // Show success container with animation
         if (successContainer) {
             successContainer.style.display = 'block';
             setTimeout(() => {
@@ -266,7 +267,21 @@ registrationForm.addEventListener('submit', async (e) => {
         
         // Show error if not already shown
         if (errorMessage.style.display === 'none') {
-            showMainError(error.message || 'Registration failed. Please try again.');
+            // Extract meaningful error message
+            let displayError = 'Registration failed. Please try again.';
+            
+            // Check if error has a meaningful message
+            if (error.message) {
+                // Don't show generic "Please fix" message again
+                if (!error.message.includes('Please fix the validation errors')) {
+                    displayError = error.message;
+                } else {
+                    // Validation errors already shown inline, use generic message
+                    displayError = 'Please correct the errors above';
+                }
+            }
+            
+            showMainError(displayError);
         }
         
         // Re-enable submit button
